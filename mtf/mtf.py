@@ -1374,7 +1374,7 @@ class black_box:
       print "Looking for supported function codes (1-127) with ModbusPDU_Generic"
       lgr.info("\n \t  \t Looking for supported function codes (1-127) with ModbusPDU_Generic")
       for fct in range(0,127,1):                     
-            pdu=struct.pack(">B",fct) +'\0x00\0x00'+'\0x00\0x01'
+            pdu=struct.pack(">B",fct) +'\x00\x00'+'\x00\x01'
             #print >>sys.stderr, 'reguest_pdu %r ' % pdu                 
             response_pdu=master1.execute_master(slave,pdu)
             lgr.info('response_pdu: ----->%r '% ByteToHex(response_pdu))                  
