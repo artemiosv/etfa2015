@@ -1,9 +1,9 @@
 ﻿Προαπαιτούμενα:
-1.Eγκατεστημένη Python 2.7.3 τουλάχιστον 
+1.Eγκατεστημένη Python 2.7.3
 
 2.Eγκατάσταση βιβλιοθήκης modbus-tk-0.4.2
-  α)Αποσυμπίεση modbus-tk-0.4.2.zip
-  b)python setup.py install
+  α) Αποσυμπίεση modbus-tk-0.4.2.zip
+  b) python setup.py install
 
 3.Eγκατάσταση βιβλιοθήκης scapy 2.2.0
 

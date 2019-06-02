@@ -1,5 +1,5 @@
 ﻿Prerequisities:
-1. Python 2.7.3 or higher installed
+1. Python 2.7.3 installed
 
 2. modbus-tk-0.4.2 installed
   a) Unzip modbus-tk-0.4.2.zip
