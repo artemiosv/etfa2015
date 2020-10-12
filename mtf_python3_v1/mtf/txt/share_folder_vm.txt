@@ -1,0 +1,8 @@
+mount -t vmhgfs .host:/ /tmp/coverage
+mount -t vmhgfs .host:/ /home/ntinosk/shares
+
+version kernel 4.0 later
+/usr/bin/vmhgfs-fuse -h t
+/usr/bin/vmhgfs-fuse .host:/ /home/ntinosk/shares -o subtype=vmhgfs-fuse,allow_other
+
+umount  /home/ntinosk/shares

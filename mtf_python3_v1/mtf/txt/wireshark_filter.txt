@@ -1,0 +1,43 @@
+######## Recent display filters (latest last), cannot be altered through command line ########
+
+recent.display_filter: (( ip.src == 127.0.0.1 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 127.0.0.1 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: (( ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 192.168.1.7 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: (( ip.src == 192.168.1.9 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 192.168.1.2 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: (( ip.src == 192.168.1.2 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 192.168.1.9 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: (( ip.src == 192.168.1.9 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 192.168.1.9 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: (( ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 192.168.1.9 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: (( ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.dstport==502  ) or  (ip.src == 192.168.1.2 and tcp.flags==0x018 and tcp.srcport==502 ) )  or tcp.flags.reset==1
+recent.display_filter: mbtcp.unit_id == 0
+recent.display_filter: mbtcp.unit_id == 51
+recent.display_filter: mbtcp.unit_id == 255
+
+
+recent.display_filter: (( ip.src == 192.168.1.8 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.3 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: (( ip.src == 192.168.1.8 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.3 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.2)
+recent.display_filter: (( ip.src == 192.168.1.8 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.2 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.2)
+recent.display_filter: (( ip.src == 192.168.1.8 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.2 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: (( ip.src == 192.168.1.8 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: (( ip.src == 192.168.1.2 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: modbus.word_cnt gt 125 and modbus.word_cnt lt 9800
+recent.display_filter: modbus.word_cnt gt 125
+recent.display_filter: modbus.word_cnt == 44
+recent.display_filter: modbus.reference_num == 1
+recent.display_filter: mbtcp.len == 6
+recent.display_filter: (( ip.src == 192.168.1.8 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.12 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: modbus.mei == 14
+recent.display_filter: (( ip.src == 192.168.1.11 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: (( ip.src == 192.168.1.12 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.12 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: (( ip.src == 192.168.1.11 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.12 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: (( ip.src == 192.168.1.12 and tcp.flags==0x018  and tcp.dstport==502 ) or  (ip.src == 192.168.1.11 and tcp.flags==0x018 and tcp.srcport==502 ) )  or ( tcp.flags.reset==1  and ip.src == 192.168.1.1)
+recent.display_filter: modbus.object_id == 0
+recent.display_filter: modbus.object_id == 2
+recent.display_filter: modbus.object_id == 1 
+recent.display_filter: modbus.read_device_id == 1
+recent.display_filter: modbus.object_id == 1 and modbus.read_device_id == 1
+recent.display_filter: modbus.object_id == 1
+recent.display_filter: modbus.object_id == 118
+recent.display_filter: modbus.read_device_id != 4
+recent.display_filter: modbus.read_device_id == 4
+recent.display_filter: modbus.mei !=14 or modbus.exception_code == 1
+recent.display_filter: modbus.mei !=14 and modbus.exception_code == 1
+recent.display_filter: modbus.exception_code == 1

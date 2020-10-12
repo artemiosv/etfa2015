@@ -1,0 +1,63 @@
+https://linuxize.com/post/how-to-install-python-3-7-on-ubuntu-18-04/
+
+Installing Python 3.7 on Ubuntu with Apt #
+
+
+    Start by updating the packages list and installing the prerequisites:
+
+ 1. apt install software-properties-common
+
+    Next, add the deadsnakes PPA to your sources list:
+
+ 2.sudo add-apt-repository ppa:deadsnakes/ppa
+
+    When prompted press Enter to continue:
+
+    Press [ENTER] to continue or Ctrl-c to cancel adding it.
+
+    Once the repository is enabled, install Python 3.7 with:
+
+ 3. sudo apt install python3.7
+
+    At this point, Python 3.7 (or 3.8)is installed on your Ubuntu system and ready to be used. You can verify it by typing:
+
+    python3.7 --version
+
+    Python 3.7.3
+
+
+#install pip3 support python3.7
+
+apt install python3-pip
+python3.7 -m pip install --upgrade pip
+
+#checkinstructions-en
+ ls /usr/bin/python*
+
+https://linuxconfig.org/how-to-change-from-default-to-alternative-python-version-on-debian-linux
+
+update-alternatives --list python
+/usr/bin/python2.7
+/usr/bin/python3.4
+
+update-alternatives --config python
+
+# update-alternatives --remove python /usr/bin/python2.7
+e.g
+update-alternatives: removing manually selected alternative - switching python to auto mode
+update-alternatives: using /usr/bin/python3.4 to provide /usr/bin/python (python) in auto mode
+
+#update-alternatives --config python
+There are 2 choices for the alternative python (providing /usr/bin/python).
+
+  Selection    Path                 Status
+------------------------------------------------------------
+* 0            /usr/bin/python3.4   2         auto mode
+  1            /usr/bin/python2.7   1         manual mode
+  2            /usr/bin/python3.4   2         manual mode
+
+
+e.g
+update-alternatives --install /usr/bin/python3.7 python /usr/bin/python3.7 3
+update-alternatives:  --install  <link> <name> <path> <priority>
+
