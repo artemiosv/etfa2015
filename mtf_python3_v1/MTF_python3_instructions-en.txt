@@ -20,15 +20,15 @@ the 20th IEEE International Conference on Emerging Technologies and
 Factory Automation (ETFA), Luxembourg, Sept. 8-11, 2015, pp. 1-6.
 
 Prerequisities:
-1. Python 3.7 or 3.8 installed
+1. Python 3.8 installed
 
-2. modbus-tk-1.0.0 installed  
-pip3 install modbus_tk==1.0.0
+2. modbus-tk-1.1.2 installed  
+pip3 install modbus_tk==1.1.3
   
 3. Install scapy 2.4.3 library
 pip3 install scapy==2.4.3
 
-4.pip3 install coloredlogs
+4.pip3 install coloredlog version 14.00
 
 5.e.g git clone https://github.com/git/git
   copy to /home/user/MTF
@@ -69,12 +69,24 @@ Defaults directory ./ 'install dir' -- such as MTF
  ./           -- save search.csv (FC support and address  and dump_memory.csv (map address table), csv file after search mode (reconnaissance)
 log_dir=./log -- path log file,save log files, 
  
-/utils 
-some utils script
 /txt 
 some instructions-en
+
 /reconnaissance
 some results from reconnaissance
+
+/basetest
+script for base test
+
+/product
+script for product message 
+
+/fig_of_test
+some shot from results (crash, DoS)
+
+/some_test_pcap
+some results from reconnaissance from pcap files-Modbus Dataset from CSET 2016
+
 	
 	
 prob_lis: The following list defines the probabilities of applying each fuzzing categoy (it is not dynamic, must be configured manually).

@@ -6,7 +6,7 @@ his is distributed under GNU LGPL license,
  Code compiled by K. Katsigiannis.
  For related questions please contact kkatsigiannis@upatras.gr
 
- Modbus TestKit: Implementation of Modbus protocol in python--modbus-tk-1.0.0 pyserial-3.4 
+ Modbus TestKit: Implementation of Modbus protocol in python--modbus-tk-1.1.2  pyserial-3.4 
  
  The modbus_tk simulator is a console application which is running a server with TCP and RTU communication
  It is possible to interact with the server from the command line or from a RPC (Remote Process Call)
@@ -20,6 +20,7 @@ import modbus_tk.defines as defines
 import modbus_tk.modbus as modbus
 import modbus_tk.modbus_tcp as modbus_tcp
 from modbus_tk.hooks import *
+import fuzz_session 
 import queue
 import socketserver
 import ctypes
@@ -86,14 +87,14 @@ class Master_b(modbus.Master):
         """Send data to a slave on the MAC layer"""
         raise NotImplementedError()    
 
-    """ Add for send pdu and response pdu return / use black-box/not fuzz/""" 
+    """ Add for send pdu and response pdu return / use reconnaissance""" 
     @threadsafe_fun
     def execute_master(self,slave,pdu,expected_length=-1):
         
         query = modbus_tcp_b.TcpQuery_b()
         request = query.build_request_blackbox(pdu, slave)  
-        lgr.info('request pdu: ---> %r '% ByteToHex(pdu))
-
+        lgr.info('') ; lgr.info('The request pdu: ---> %r '% ByteToHex(pdu))                                   
+        
         # send the request to the slave
         retval = call_hooks("modbus.Master.before_send", (self,request))
 
@@ -183,7 +184,7 @@ class Master_b(modbus.Master):
                         response = retval
                     if self._verbose:
                         lgr.warn(utils.get_log_buffer("<- ", response))
-                    lgr.info('Fuzzing_address %s, response Modbus message : %r' % (address_read, ByteToHex(response)))
+                    lgr.info('address: %s, response message: %r' % (address_read, ByteToHex(response))) 
                      
                     if len(response)==0:
                         return response
@@ -202,7 +203,7 @@ class Master_b(modbus.Master):
                                     lgr.error("ModbusError(not specifications)!! >>return_code=%d- exception Code=%d" % (return_code, byte_2))   
                                     return lgr.info('Answer >> First address_read %s response %r '  % (address_read,(return_code, byte_2)))              
 
-                        elif return_code!= function_code :
+                        elif return_code!= function_code:
                             lgr.critical("ModbusError(not specifications)!! >>return_code=%d- request_function code=%d" % (return_code,function_code ))   
                             return lgr.info('Answer >> First address_read %s response %r '  % (address_read,ByteToHex(response)))              
 
@@ -409,11 +410,13 @@ class Master_b(modbus.Master):
                     
                 return response_pdu          
              
-            elif (fuzz_session.search_mode==False) and (fuzz_session.fuzz_mode==True):                             # search False /fuzzer mode
+            elif (fuzz_session.search_mode==False) and (fuzz_session.fuzz_mode==True):                             # search False/fuzzer mode
                 """for fuzzer object"""  
                 query = modbus_tcp_b.TcpQuery_b()                                                                  # my object for fuzzer                               
                 request = query.build_request_b(pdu, slave)                                                        # request for fuzzer                                          
-                lgr.info('The request Modbus message first 260 ByteHex : %r ' % ByteToHex(request[:260]))           #Fuzz request  to SUT                                                      
+                lgr.info('Request Modbus msg (first 260 ByteHex): %r ' % ByteToHex(request[:260]))           #Fuzzing request  to SUT
+                (function_code,) = struct.unpack(">B", pdu[0:1])  #in case fuzz testing  function_code 
+                                                  
                 # send the request to the slave
                 retval = call_hooks("modbus.Master.before_send", (self, request))
                 if retval != None:
@@ -433,32 +436,32 @@ class Master_b(modbus.Master):
                     if self._verbose:
                         lgr.warn(utils.get_log_buffer("<- ", response))
                     #all case response Modbus message 
-                    lgr.info('Fuzzing_address %s, response Modbus message : %r' % (starting_address, ByteToHex(response)))    
+                    lgr.info('Response Modbus msg: %r' % ByteToHex(response)) 
                     # extract the pdu part of the response
                     if len(response)==0 :
-                        lgr.critical('Fuzzing_address %s, response Modbus message : %r' % (starting_address, ByteToHex(response)))                                                                               
+                        lgr.critical('address: %s, response message: %r' % (starting_address, ByteToHex(response)))                                                                               
                         return response
                     else :         
                     #extract the pdu part of the response                    
                         response_pdu = query.parse_response_b(response)
                         if len(response_pdu)==1 or len(response_pdu)==0 : 
-                            lgr.critical('Fuzzing_address %s, response Modbus message : %r' % (starting_address, ByteToHex(response)))                                                                               
+                            lgr.critical('address: %s, response message: %r' % (starting_address, ByteToHex(response)))                                                                               
                             return response
-                        """analyze the received data Response message analyzer byte >=2"""
+                        """analyze the received data response message analyzer byte >=2"""
                         (return_code, byte_2) = struct.unpack(">BB", response_pdu[0:2])
                         if return_code >= 128:                   
                                 exception_code = byte_2
                                 if 1 <= exception_code<= 4:                                       # exception Code out of specifications !!!!
-                                    lgr.warn("ModbusWarn >>return_code=%d- exception Code=%d" % (return_code, byte_2))
+                                    lgr.warn("ModbusWarn >>return code:%d, exception code:%d" % (return_code, byte_2)) 
                                     #raise ModbusError(exception_code)
-                                    return lgr.info('Answer >> Fuz_address %s response %r '  % (starting_address,(return_code, byte_2)))
+                                    return lgr.info('Answer >> address: %s, response: %r '  % (starting_address,(return_code, byte_2))) 
                                 else : 
-                                    lgr.error("ModbusError(not specifications)!! >>return_code=%d- exception Code=%d" % (return_code, byte_2))   
-                                    return lgr.info('Answer >> Fuz_address %s response %r '  % (starting_address,(return_code, byte_2)))              
+                                    lgr.error("ModbusError(not specifications)!! >>return code:%d- exception code:%d" % (return_code, byte_2))   
+                                    return lgr.info('Answer >> address: %s, response: %r '  % (starting_address,(return_code, byte_2))) 
 
-                        elif return_code!= function_code :
-                            lgr.critical("ModbusError(not specifications)!! >>return_code=%d- request_function code=%d" % (return_code,function_code ))   
-                            return lgr.info('Answer >> Fuz_address %s response %r '  % (starting_address,ByteToHex(response)))              
+                        elif return_code!= function_code : #in case fuzz testing function_code 
+                            lgr.critical("ModbusError(not specifications)!! >>return code:%d, request function code=%d" % (return_code,function_code ))   
+                            return lgr.info('Answer >> address: %s, response: %r '  % (starting_address,ByteToHex(response))) 
 
                         else:
                             if function_code == READ_COILS or function_code == READ_DISCRETE_INPUTS:                               
@@ -470,7 +473,7 @@ class Master_b(modbus.Master):
                                     # the byte count in the pdu is invalid
                                     lgr.warn("ModbusInvalidResponseError >> Wall_Byte count is %d while actual number of bytes is %d. " % (byte_count, len(data)))                                    
                                     #byte_count=byte_2                        #set byte count response and calculate
-                                    lgr.warn('Answer >> Fuz_address %s ,fc %d ,response %r '  % (starting_address,return_code, ByteToHex(response)))
+                                    lgr.warn('Answer >> address: %s, fc: %d, response: %r '  % (starting_address,return_code, ByteToHex(response)))
                                     #returns the data as a tuple according to the data_format
                                     #(calculated based on the function or user-defined)
                                     data_format = ">"+(len(data)*"B")                      # if  byte_2==0                       
@@ -489,7 +492,7 @@ class Master_b(modbus.Master):
                                     else :
                                         pass    
                                         
-                                    return lgr.error('Answer >> Fuz_address %s result  %r '  % (starting_address,result)) 
+                                    return lgr.error('Answer >> address %s, result  %r '  % (fuzz_session.starting_address,result)) 
                             
                             elif function_code == READ_INPUT_REGISTERS or function_code == READ_HOLDING_REGISTERS:
                                 #get the values returned by the reading function
@@ -499,13 +502,13 @@ class Master_b(modbus.Master):
                                 data_format = ">"+((byte_count//2)*"H")
                                 
                                 if len(data) <= 1 :
-                                    return lgr.error('Answer >> Fuz_address %s ,fc %d ,response %r '  % (starting_address,return_code, ByteToHex(response)))                         # not register len (16bit)    
+                                    return lgr.error('Answer >> address %s, fc %d, response %r '  % (starting_address,return_code, ByteToHex(response)))                         # not register len (16bit)    
                                
                                 if byte_count != len(data):                                   # if response byte is request 
                                     # the byte count in the pdu is invalid
-                                    lgr.error("ModbusInvalidResponseError >> Byte count is %d while actual number of bytes is %d. " % (byte_count, len(data)))                                    
+                                    lgr.error("ModbusInvalidResponseError >> Byte count: %d while actual number of bytes: %d. " % (byte_count, len(data)))                                    
                                     #byte_count=byte_2                        #set byte count response and calculate
-                                    lgr.error('Answer >> Fuz_address %s ,fc %d ,response %r '  % (starting_address,return_code, ByteToHex(response)))
+                                    lgr.error('Answer >> address: %s, fc: %d, response: %r '  % (starting_address,return_code, ByteToHex(response)))
                                     #returns the data as a tuple according to the data_format
                                     #(calculated based on the function or user-defined)
                                     data_format = ">"+((len(data)//2)*"H")                                                  
@@ -527,27 +530,27 @@ class Master_b(modbus.Master):
                                     else :
                                         pass    
                                         
-                                    return lgr.error('Answer >> Fuz_address %s result  %r '  % (starting_address,result)) 
+                                    return lgr.error('Answer >> address: %s result:  %r '  % (starting_address,result)) 
 
                             # returns what is returned by the slave after a writing function /return tumple (results)                                   
                             elif (function_code == WRITE_MULTIPLE_REGISTERS) or (function_code == WRITE_MULTIPLE_COILS) : 
                                 nb_of_digits=0
-                                data = response_pdu[5:] #fix from 3
+                                data = response_pdu[5:] 
                                 byte_data=len(data)
                                 (Quantity_of_Registers, ) = struct.unpack(">H", pdu[3:5])        # 2 BYTE   MAX 1968 COIL/ 123 REG
                                 
                                 data_format = ">"+((byte_data//2)*"H")
                                 if  len(data) ==0 or len(data) < 2 :
-                                     return lgr.error('ModbusInvalidResponseError  >> Fuz_address %s ,return_code %d ,data %r '  % (starting_address,return_code, ByteToHex(data)))
+                                     return lgr.error('ModbusInvalidResponseError  >> address: %s,return_code: %d ,data %r '  % (starting_address,return_code, ByteToHex(data)))
                                 #if  return_code  bad 
                                 else :
                                     if (return_code == WRITE_MULTIPLE_REGISTERS) or (return_code == WRITE_MULTIPLE_COILS):                                                                              
-                                        if (len(data)%2)==0 : z=(len(data))                    #python3                                
+                                        if (len(data)%2)==0 : z=(len(data))                                                    
                                         else : z=(int(len(data))-1)
                                         data = response_pdu[5:5+z]    
                                         
                                     else :
-                                        return lgr.error('ModbusInvalidResponseError/bad code ?  >> Fuz_address %s ,return_code %d ,data %r '  % (starting_address,return_code, ByteToHex(data)))                                
+                                        return lgr.error('ModbusInvalidResponseError >> address: %s, return_code: %d, data: %r '  % (starting_address,return_code, ByteToHex(data)))                                
                                
                                     #returns the data as a tuple according to the data_format
                                     #(calculated based on the function or user-defined)
@@ -565,9 +568,9 @@ class Master_b(modbus.Master):
                                     #compare byte count request/and  quantity of coil/register to write
                                     # convert Tuple to Integer-int(''.join(map(str,result))
                                     if Quantity_of_Registers !=  int(''.join(map(str,result))) :        
-                                        return lgr.error('ModbusInvalidResponseError  >> Fuz_address %s ,Quantity of Registers  %d ,data %r '  % (starting_address,Quantity_of_Registers , result ))
+                                        return lgr.error('ModbusInvalidResponseError  >> address:%s, Quantity of Registers: %d ,data: %r '  % (starting_address,Quantity_of_Registers, result ))
                                     else : 
-                                        return lgr.info('Answer >> Fuz_address %s response %r '  % (starting_address,result))
+                                        return lgr.info('Answer >> address: %s, response: %r '  % (starting_address,result))
                                     
                             elif (function_code == WRITE_SINGLE_COIL) or (function_code == WRITE_SINGLE_REGISTER) :
                                  nb_of_digits=0
@@ -576,7 +579,7 @@ class Master_b(modbus.Master):
                                  data_format = ">"+((byte_data//2)*"H")
 
                                  if  len(data) !=0 and len(data) < 4 :                                       #bad output value
-                                     return lgr.error('ModbusInvalidResponseError  >> Fuz_address %s ,return_code %d ,data %r '  % (starting_address,return_code, ByteToHex(data)))
+                                     return lgr.error('ModbusInvalidResponseError  >> address: %s, return_code: %d ,data %r '  % (starting_address,return_code, ByteToHex(data))) 
                                 #if  return_code  bad
                                  else :
                                     if (return_code == WRITE_SINGLE_COIL) or (return_code == WRITE_SINGLE_REGISTER) :
@@ -586,10 +589,10 @@ class Master_b(modbus.Master):
                                         pass
 
                                     else :
-                                        return lgr.error('ModbusInvalidResponseError  >> Fuz_address %s ,return_code %d ,data %r '  % (starting_address,return_code, ByteToHex(data)))
+                                        return lgr.error('ModbusInvalidResponseError  >> address: %s, return_code:%d, data: %r '  % (starting_address,return_code, ByteToHex(data)))
                                 
                             else:   
-                                return lgr.error('ModbusInvalidResponseError  >> Fuz_address %s ,return_code %d ,data %r '  % (starting_address,return_code, ByteToHex(data)))
+                                return lgr.error('ModbusInvalidResponseError  >> address: %s, return_code: %d, data %r '  % (starting_address,return_code, ByteToHex(data)))
 
                             #returns the data as a tuple according to the data_format
                             #(calculated based on the function or user-defined)
@@ -604,7 +607,7 @@ class Master_b(modbus.Master):
                                         digits.append(byte_val % 2)
                                         byte_val = byte_val >> 1
                                 result = tuple(digits)                                
-                            return lgr.info('Answer >> Fuz_address %s response %r '  % (starting_address,result))                        
+                            return lgr.info('Answer >> address: %s, response:%r '  % (starting_address,result))
             else  :
                 lgr.error('Problem')
                 return    
@@ -617,7 +620,7 @@ class Master_b(modbus.Master):
                 query = modbus_tcp_b.TcpQuery_b()                                                             # my object for fuzzer                               
                 request = query.build_request_b(pdu, slave)                                                   # request for fuzzer /return mbap+pdu                     
                 response_pdu=''                    
-                lgr.info('The request Modbus message first 260 ByteHex : %r ' % ByteToHex(request[:260]))     #Fuzz request  to SUT                                             
+                lgr.info('The request Modbus message (first 260 ByteHex): %r ' % ByteToHex(request[:260]))     #Fuzz request  to SUT                                             
                 # send the request to the slave
                 retval = call_hooks("modbus.Master.before_send", (self, request))
                 if retval != None:
@@ -638,10 +641,10 @@ class Master_b(modbus.Master):
                         lgr.warn(utils.get_log_buffer("<- ", response))                        
                     # extract the pdu part of the response
                     if len(response)==0:
-                       lgr.critical('response Modbus message : %r' % (ByteToHex(response)))
+                       lgr.critical('response Modbus message: %r' % (ByteToHex(response)))
                        return response
                     else :
-                        lgr.info('response Modbus message : %r' % ByteToHex(response))
+                        lgr.info('response Modbus message: %r' % ByteToHex(response))
                         response_pdu = query.parse_response_b(response)                                               
                         return self.dissect(pdu,request,response_pdu)   
                             
@@ -670,15 +673,15 @@ class Master_b(modbus.Master):
                 if return_code >= 128:                   
                     exception_code = byte_2
                     if 1 <= exception_code<= 4  :                                       # exception Code out of specifications !!!!
-                        lgr.warn("ModbusWarn >>return_code=%d- exception Code=%d" % (return_code, byte_2))
+                        lgr.warn("ModbusWarn >>return_code:%d- exception Code:%d" % (return_code, byte_2))
                         #raise ModbusError(exception_code)
                         return (return_code, byte_2)
                     else : 
-                        lgr.error("ModbusError(not specifications)!! >>return_code=%d- exception Code=%d" % (return_code, byte_2))   
+                        lgr.error("ModbusError(not specifications)!! >>return_code:%d- exception Code:%d" % (return_code, byte_2))   
                         return (return_code, byte_2)                    
                 
                 if return_code!= function_code :
-                    lgr.critical("ModbusError(not specifications)!! >>return_code=%d- request_function code=%d" % (return_code,function_code ))   
+                    lgr.critical("ModbusError(not specifications)!! >>return_code:%d- request_function code:%d" % (return_code,function_code ))   
                     return (return_code,function_code)
 
 
@@ -707,11 +710,11 @@ class Master_b(modbus.Master):
                      data = response_pdu[1:]                      
                      
                      if len(data)>252 or len(data)<7 :                                 #bad len response legal PDU=253 bytes                                     
-                         lgr.error('response malformed packet, invalid PDU len :%d ' %len(response_pdu))
+                         lgr.error('response malformed packet, invalid PDU len:%d ' %len(response_pdu))
                          return data
                      
                      elif len(data) <= 2 : 
-                         lgr.error("ModbusError(not specifications)!! >>return_code=%d- exception Code=%r" % (return_code, data))   
+                         lgr.error("ModbusError(not specifications)!! >>return_code:%d-exception Code:%r" % (return_code, data))   
                          return data 
                      
                      else : 
@@ -725,7 +728,7 @@ class Master_b(modbus.Master):
                          lgr.warn("Bad len response packet >245 >%r " %data)
                          return data 
                      elif len(data) <= 2 : 
-                         lgr.error("ModbusError(not specifications)!! >>return_code=%d- exception Code=%r" % (return_code, data))   
+                         lgr.error("ModbusError(not specifications)!! >>return_code:%d- exception Code:%r" % (return_code, data))   
                          return data  
                      elif pdu == response_pdu :                                    #compare pdu and response_pdu /look >>??? (pdu is fuzz)
                          handle  = WriteFileRecordResponse()                       #respone is ok     
@@ -735,27 +738,26 @@ class Master_b(modbus.Master):
                    
                 #23 (0x17)-The normal response contains the data from the group of registers that were read.         
                 elif return_code== Read_Write_Multiple_Registers:
-                    data = response_pdu[2:]
-                    byte_data=len(data)                    
-                    (Read_Byte_Coun, ) = struct.unpack(">H", pdu[3:5])            #extract to tumple / read byte count request                   
+                    data = response_pdu[2:] ; byte_data=len(data)                  #len data response                                                               
+                    if len(pdu[3:5]) <2 :
+                       lgr.critical("ModbusError!! >>response byte count:%d- Quantity to Read(byte_data): %d-result: %r" % (byte_2 , byte_data, pdu[3:5]))
+                       return pdu[3:5]
+                    
+                    (Read_Quantity, ) = struct.unpack(">H", pdu[3:5])              #extract to tumple /fuzz Read_Quantity request                 
                    
-                    if Read_Byte_Coun == (byte_2 //2):
+                    if Read_Quantity == (byte_2 //2):
 
-                        if byte_2 == byte_data :                                  # diff from to byte_count/data
-                            data_format = ">"+((byte_2//2)*"H")                    #no problem 
+                        if byte_2 == byte_data :                                   # if deff len  to byte_count/data
+                            data_format = ">"+((byte_2//2)*"H")                    # is not problem 
                         else :  
                             data_format = ">"+((byte_data//2)*"H")
-                            lgr.error("ModbusError(not specifications)!! >>Byte Count=%d- Quantity to Read(byte_data) =%d" % (byte_2 , byte_data))
+                            lgr.critical("ModbusError!! >>response byte count:%d-Quantity to Read(byte_data):%d" % (byte_2 , byte_data))
 
-                        result = struct.unpack(data_format, data)
-                    
-                    else :
-                        # request Read Byte Count not equal response Byte Count/2
+                    else :                                                          # request Read Byte Count not equal response Byte Count/2               
                         data_format = ">"+((byte_data//2)*"H")
-                        lgr.error("ModbusError(not specifications)!! >>request_Read_Byte_Coun(2*Quantity)=%d- Quantity to read=%d" % (Read_Byte_Coun , byte_2 //2))
+                        lgr.critical("ModbusError!! >>request_Read_Quantity:%d-Quantity to read:%d" % (Read_Quantity, byte_2 //2))
                             
-                    result = struct.unpack(data_format, data)    
-                    
+                    result = struct.unpack(data_format, data[:2*(len(data)//2)])    
                     if nb_of_digits > 0:
                         digits = []
                         for byte_val in result:
@@ -764,10 +766,8 @@ class Master_b(modbus.Master):
                                     break
                                 digits.append(byte_val % 2)
                                 byte_val = byte_val >> 1
-                        result = tuple(digits)
-                        
-                    return result
-                                                                          
+                        result = tuple(digits)                        
+                                                                                                                                      
                 #22 (0x16)/The normal response is an echo of the request. The response is returned after the register 
                 #has been written.            
                 elif return_code== Mask_Write_Register :                    
@@ -778,12 +778,95 @@ class Master_b(modbus.Master):
                        lgr.error("Bad response PDU %r" % ByteToHex(data))
                        return ByteToHex(data) 
                     else  :  
-                       return ByteToHex(data)                                   
+                       lgr.info('Decode Modbus message response');return ByteToHex(data)                                   
                 
+                
+        
+                #ver 1.1
+                #'''add serial exceptions FC '''
+                
+                #function_code = 0x07---The normal response contains the status of the eight Exception Status 
+                elif return_code== Read_Exception_Status :
+                    data = response_pdu[1:]
+                    #lgr.info(ByteToHex(data))
+                    handle  = ReadExceptionStatusResponse()
+                    message = handle.decode(data)                                         
+                    return message
+
+                #function_code =11 (0x0B) Get Comm Event Counter (Serial Line only)
+                elif return_code== Get_Comm_Event_Counter:
+                    data = response_pdu[1:]
+                    handle  = GetCommEventCounterResponse()
+                    message = handle.decode(data)                                         
+                    return message
+                
+                #function_code 12 (0x0C) Get Comm Event Log (Serial Line only)    
+                elif return_code== Get_Comm_Event_Logs:
+                    data = response_pdu[1:]
+                    handle  = GetCommEventLogResponse()
+                    message = handle.decode(data)                                        
+                    return message
+
+                #function_code 17 (0x11) Report Server ID (Serial Line only)
+                elif return_code== Report_Slave_ID:
+                    data = response_pdu[1:]
+                    handle  = ReportSlaveIdResponse()
+                    message = handle.decode(data)                                     
+                    return message    
+
+                #function_code  08 (0x08) Diagnostics (Serial Line only)    
+                elif return_code==Diagnostics :
+                    '''
+                    Base decoder for a diagnostic response
+                    param data: The data to decode into the function code
+                    self.sub_function_code, self.message = struct.unpack('>HH', data)
+                    Diagnostic Sub Code 21                                sub function code = 0x0015
+                    \x08\x00\x15\x00\x03'),                               GetClearModbusPlus/(Get Statistics)     
+                    '\x08\x00\x15\x00\x04'),                              GetClearModbusPlus/((Clear Statistics))
+                    legal response         \x00\x15' + '\x00\x00' * 55)
+
+                    '''
+                    enc = response_pdu[1:]
+                    if len(enc)<=1:
+                        lgr.critical("malformed packet bad sub_function_code and data response %r" %ByteToHex(enc)); return (ByteToHex(enc),)
+                    sub_f,=struct.unpack('>H', response_pdu[1:3])
+                    #bad len response legal PDU=253 bytes, ex case \x08\x00\x15\-Diagnostic Sub Code 21 
+                    if 1<len(enc)<4 or (len(enc)>4 and sub_f!=21):
+                        lgr.critical("bad sub_function_code and data response: %r" %ByteToHex(enc)); return (ByteToHex(enc),)
+                    else: return (ByteToHex(enc),)  
+                    #(len(enc)>4 and sub_f==21):return (ByteToHex(enc),)                                                     
+                    # only return self.sub_function_code, self.message   
+                    handle = DiagnosticStatusResponse()
+                    handle.decode(enc)                                                                           
+                    data = struct.pack('>H', handle.message)
+                    sub_function_code = struct.pack('>H', handle.sub_function_code)                   
+                    lgr.info("dec sub_function_code:%d-data:%r" % (handle.sub_function_code, ByteToHex(data)))
+                    return (ByteToHex(sub_function_code),ByteToHex(data))
+                
+                #Read_Device_Information  FC : 43   
+                elif return_code==Read_device_Identification : 
+                    mei_object=[]
+                    data = response_pdu[1:]
+                   
+                    if len(data)<6 :
+                        lgr.info('response message byte less 6 byte: %r' % ByteToHex(data))
+                        return data
+                    
+                    #read device information MESSAGE response  decode        
+                    handle  = ReadDeviceInformationResponse()    
+                    message=handle.decode(data)   
+                    #if  Object is in list ...
+                    if handle.information not in  mei_object :
+                        mei_object.append(dict(handle.information))                                                                                     
+                        #return  mei_object        
+                    else :
+                        lgr.info('message : %r ' % ByteToHex(message))
+                        return message
+                                                     
                 else:
-                    lgr.error("ModbusError(not specifications)!! >>return_code=%d- byte_2=%d" % (return_code, byte_2))   
-                    return  
- 
+                    lgr.error("ModbusError(not specifications-(return_code or exception)!! >> return_code:%d-byte_2:%r" % (return_code, byte_2))          
+                    return (return_code, byte_2) 
+
 class Databank_b(modbus.Databank):
     """A databank is a shared place containing the data of all slaves"""
     

@@ -622,8 +622,6 @@ class ReadWriteMultipleRegistersResponse():
         return "ReadWriteNRegisterResponse (%d)" % len(self.registers)
 
 
-
-
 #---------------------------------------------------------------------------#
 # Read Device Information
 #---------------------------------------------------------------------------#
@@ -770,7 +768,6 @@ class ReadDeviceInformationResponse():
         :returns: The string representation of the response
         '''
         return "ReadDeviceInformationResponse(%d)" % self.read_code
-
 
 
 #---------------------------------------------------------------------------#

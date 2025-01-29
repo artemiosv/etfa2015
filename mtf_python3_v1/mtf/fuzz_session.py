@@ -14,10 +14,8 @@ fuzz_addre_DIS_IN=[]
 fuzz_addre_IN_REG=[]
 fuzz_addre_HO_REG=[]
 
-#Total number of request, 
+#Counter number of request for each FC def=200, num_of_request=total number of request, 
 num_of_request=0
-
-#Counter number of request for each FC def=200
 num_of_fc=0
 count_num_of_fc=0
 flag_reguest=True
@@ -32,8 +30,8 @@ quantity=100
 
 #Prepare fuzz two fields in message'
 fuzz_two_fields=False
-#For the FC 20,21
 
+#For the FC 20,21
 record1='FileRecord(file=%d, record=%d, length=%d)' % (0,0,0)
 
 '''This class about  dictionary of smart value, interest value and list operation fuzz testing
@@ -90,6 +88,7 @@ value_test_record_number=[]
 value_test_record_length=[]
 foo_len= []
 foo_fct= []
+f_test_FC43=[] 
 
 #add for loop send valid if not response socket
 socket_flag=False
@@ -101,3 +100,31 @@ receive_flag=False
 receive_timeout=0
 init_num_rec=0
 num_recon_nrec=0
+
+#param master1 object,define slave=1
+#define request of reconnaissance,read pcap and normal and item list index for interesting byte
+num_of_reco=0;num_packets=0
+item_list=0;item_list_hex=0
+master1 =None 
+
+#Running  in Search_mode /Running in fuzzing_mode', read pcap file
+fuzz_mode =False
+search_mode=False
+pcap_mode=False
+
+
+#for all list min/max address            
+MIN_COILS =0
+MAX_COILS =0
+MIN_IN_REG=0
+MAX_IN_REG=0
+MIN_DIS_IN=0
+MAX_DIS_IN=0
+MIN_HO_REG=0
+MAX_HO_REG=0
+
+#Read_Device_Information  FC : 43
+read_code =0x01    
+object_id =0x01 
+
+starting_address=0 

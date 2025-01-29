@@ -6,7 +6,7 @@ This is distributed under GNU LGPL license,
  Code compiled by K. Katsigiannis.
  For related questions please contact kkatsigiannis@upatras.gr 
 
- Modbus TestKit: Implementation of Modbus protocol in python--modbus-tk-1.0.0 pyserial-3.4
+ Modbus TestKit: Implementation of Modbus protocol in python--1.1.3 pyserial-3.4
 
  The modbus_tk simulator is a console application which is running a server with TCP and RTU communication
  It is possible to interact with the server from the command line or from a RPC (Remote Process Call)
@@ -17,18 +17,17 @@ import socket
 import threading
 import struct
 import select
+import logging
 import modbus_tk
 import modbus_tk.defines as defines
 import modbus_tk.modbus as modbus
 import modbus_tk.modbus_tcp as modbus_tcp
 from modbus_tk.hooks import *
+from modbus_tk.utils import threadsafe_function, flush_socket, to_data
 import socketserver
 import utils_b
 import modbus_b
 from mtf import *
-import logging
-from modbus_tk.utils import threadsafe_function, flush_socket, to_data
-
 
 class ModbusInv_MbapError(Exception):
     """Exception raised when the modbus TCP header doesn't correspond to what is expected"""
@@ -103,7 +102,8 @@ class TcpMaster_b(modbus_tcp.TcpMaster,modbus_b.Master_b):
             
             try:
             # read at most 1 bytes 
-                rcv_byte = self._sock.recv(1)            
+                rcv_byte = self._sock.recv(1)
+                
                
             except socket.timeout:                
                 lgr.error('Socket timeout..  not receive')
@@ -118,13 +118,13 @@ class TcpMaster_b(modbus_tcp.TcpMaster,modbus_b.Master_b):
                         
                         if fuzz_session.receive_timeout==15 : 
                             fuzz_session.receive_flag=False;lgr.info('')                           
-                            lgr.warn('Connection not response (timeout) after %d request..Connection lost/freeze..do open new connection'%fuzz_session.receive_timeout);time.sleep(5.0)                                                                                                         
+                            lgr.warn('Connection not response (timeout) after %d request..connection lost/freeze..do open new connection'%fuzz_session.receive_timeout);time.sleep(5.0)                                                                                                         
                             fuzz_session.receive_timeout=0
                             self._do_open_b()
                             
                 else:
                     fuzz_session.receive_flag=False
-                return response  
+                return response 
 
             
             except socket.error as e:                               
@@ -140,14 +140,17 @@ class TcpMaster_b(modbus_tcp.TcpMaster,modbus_b.Master_b):
             else:
                 break
                 
-        retval = call_hooks("modbus_tcp.TcpMaster.after_recv", (self, response))
+        retval = call_hooks("modbus_tcp.TcpMaster.after_recv", (self, response)) ;lgr.info('Socket receive')                 
+            
         if retval != None:
             return response
-        return response       
+        return response 
     
     def _send_b(self, request):
         
         retval = call_hooks("modbus_tcp.TcpMaster.before_send", (self, request))
+        if fuzz_session.search_mode==True:  
+            fuzz_session.num_of_reco += 1 #+ Num of request in reconnaissance
         if retval != None:
             request = retval
         try:
@@ -158,9 +161,9 @@ class TcpMaster_b(modbus_tcp.TcpMaster,modbus_b.Master_b):
             #try to reconnect                       
             self._do_open_b()
         if len(request)>260:
-            lgr.error('total len request out of specifications .. !! : %d bytes' % len(request))    
+            lgr.error('Total len request out of spec: %d bytes' % len(request))    
         else :
-            lgr.info('total len request : %d bytes' % len(request))
+            lgr.info('Total len request in spec: %d bytes' % len(request))
         self._sock.send(request)    
         
 
@@ -254,11 +257,10 @@ class TcpServer_b(modbus_tcp.TcpServer,modbus_b.Server_b,modbus_b.Databank_b):
                 sock.close()
                 self._sockets.remove(sock)
 
-#---------------------------------------------------- ------------------------------------
-# add for fuzzer
-#------------------------------------------------------------------------------------------
 class TcpMbap_b(modbus_tcp.TcpMbap):
-    """Defines the information added by the Modbus TCP layer"""
+    """
+    add for fuzzer
+    Defines the information added by the Modbus TCP layer"""
     
     def __init__(self):
         """Constructor: initializes with 0"""
@@ -273,7 +275,7 @@ class TcpMbap_b(modbus_tcp.TcpMbap):
         
     def unpack(self, value):
         """extract the TCP mbap from a string"""
-        (self.transaction_id, self.protocol_id, self.length, self.unit_id) = struct.unpack(">HHHB", value)    #python 3 fix .encode() 
+        (self.transaction_id, self.protocol_id, self.length, self.unit_id) = struct.unpack(">HHHB", value) 
 
     # Check that the MBAP of the response is valid. If not write log error /add for fuzzer dessect message
     def check_response_b(self, request_mbap, response_pdu_length):
@@ -304,13 +306,13 @@ class TcpQuery_b(modbus_tcp.TcpQuery,modbus.Query):
         else:
             TcpQuery_b.last_transaction_id = 0
         return TcpQuery_b.last_transaction_id
-        
-    #---------------------------------------------------------------------------------------------
-    # process the fuzzer
-    # static variable for giving a unique id to each query/ first self._request_mbap without fuzzer
-    #--------------------------------------------------------------------------------------------    
+    
     def build_request_b(self,pdu,slave):
-        """Add the Modbus TCP part to the request"""
+        """Add the Modbus TCP part to the request
+        process the fuzzer
+        static variable for giving a unique id to each query/ first self._request_mbap without fuzzer
+
+        """
 
         adu=""
         p=process()
@@ -318,17 +320,15 @@ class TcpQuery_b(modbus_tcp.TcpQuery,modbus.Query):
         self._request_mbap.transaction_id = self._get_transaction_id() 
         self._request_mbap.unit_id = slave
         self._request_mbap.protocol_id = 0                
-        adu,pdu=p.init_new_session(pdu,slave)             # Call the fuzzing mode and fuzz testing 
-       
+        adu,pdu=p.init_new_session(pdu,slave)             # Call the fuzzing mode and fuzz testing       
         
         if adu=="":                                       #no fuzzing adu
            mbap = self._request_mbap.pack()               #pack to string
            return mbap+ pdu                               #to return to modbus_b.py def executed. pdu byte odject
         else :
            self._request_mbap.unpack(adu)                 #fuzz instanse mbap /for  response_mbap.check_response_b                                     # 
-           return adu+pdu                                 # string fields, return to modbus_b.py def executed    
+           return adu+pdu                                 #string fields, return to modbus_b.py def executed    
                 
-    
     def parse_request_b(self, request):
         """Extract the pdu from a modbus request"""
         
@@ -338,7 +338,7 @@ class TcpQuery_b(modbus_tcp.TcpQuery,modbus.Query):
             self._request_mbap.transaction_id    
             self._request_mbap.unit_id
         else:
-            lgr.warn("Request length is only %d bytes. " % (len(request)))
+            lgr.error("Request length is only %d bytes. " % (len(request)))
 
     
     def parse_response_b(self, response):                                        
@@ -349,7 +349,7 @@ class TcpQuery_b(modbus_tcp.TcpQuery,modbus.Query):
             self._response_mbap.check_response_b(self._request_mbap, len(pdu)) # check mbap and write log/ for fuzzer dissect
             return pdu
         else:
-            lgr.warn('ModbusResponseError  length is only %d bytes.' % len(response))
+            lgr.error('ModbusResponseError length is only %d bytes.' % len(response))
             return response
 
     def build_request_blackbox(self, pdu, slave):

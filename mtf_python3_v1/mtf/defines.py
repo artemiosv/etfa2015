@@ -8,6 +8,12 @@ Code compiled by K. Katsigiannis.
 For related questions please contact kkatsigiannis@upatras.gr 
 
 """
+host=None            
+log_dir = "./log/"                             # def ./dir for save log file, or create
+csvFile= "" 
+log_file="" 
+pcap_file="" 
+
 #supported modbus_tk functions (8)
 READ_COILS = 1
 READ_DISCRETE_INPUTS = 2
@@ -18,7 +24,7 @@ WRITE_SINGLE_REGISTER = 6
 WRITE_MULTIPLE_COILS = 15
 WRITE_MULTIPLE_REGISTERS = 16 
 
-# add extra function for fuzzer -insert from pymodbus 1.2.0 (module:file_message.py)
+# add extra function for fuzzer -insert from pymodbus (module:file_message.py)
 #Encapsulated Interface Transport=43       (0x2B) MEI_sub_function_code  13/14
 Read_device_Identification = 43
 Read_Write_Multiple_Registers = 23           #(0x17)   
@@ -27,6 +33,10 @@ Read_FIFO_queue = 24                         #(0x18)
 Read_File_record = 20                        #(0x14) 
 Write_File_record = 21                       #(0x15)  
 Report_Slave_ID = 17                         #(0x11) (Serial Line only)
+Read_Exception_Status=7
+Diagnostics=8
+Get_Comm_Event_Counter=11
+Get_Comm_Event_Logs=12
 
 #modbus exception codes support modbus_tk
 ILLEGAL_FUNCTION = 1

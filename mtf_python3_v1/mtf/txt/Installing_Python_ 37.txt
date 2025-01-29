@@ -19,7 +19,7 @@ Installing Python 3.7 on Ubuntu with Apt #
 
  3. sudo apt install python3.7
 
-    At this point, Python 3.7 (or 3.8)is installed on your Ubuntu system and ready to be used. You can verify it by typing:
+    At this point, Python 3.7 is installed on your Ubuntu system and ready to be used. You can verify it by typing:
 
     python3.7 --version
 
