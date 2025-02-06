@@ -1,10 +1,13 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
+http://github.com/riptideio/pymodbus 2.3.0
 File Record Read/Write Messages
 -------------------------------
 '''
 import struct
-import modbus_b 
-import modbus_tcp_b 
+import modbus_tcp_b
+import sys 
 from utils_b import *
 
 class MoreData():
@@ -181,8 +184,9 @@ class ReadFileRecordResponse():
             count += response_length + 1 # the count is not included
             record = FileRecord(response_length=response_length,
                 record_data=data[count - response_length + 1:count])
-            if reference_type == 0x06: self.records.append(record)
-
+            if reference_type != 0x06 or reference_type == 0x06 : self.records.append(record)  #fix for fuzzer
+        return  self.records                                       
+                
 
 class WriteFileRecordRequest():
     '''
@@ -207,7 +211,6 @@ class WriteFileRecordRequest():
         :returns: The byte encoded packet
         '''
         total_length = sum((record.record_length * 2) + 7 for record in self.records)
-        #print('total_length %d' % total_length, file=sys.stderr)
 
         packet = struct.pack('B', total_length)
         for record in self.records:
@@ -232,6 +235,7 @@ class WriteFileRecordRequest():
                 file_number=decoded[1], record_number=decoded[2],
                 record_data=data[count - response_length:count])
             if decoded[0] == 0x06: self.records.append(record)
+
 
     def execute(self, context):
         ''' Run the write file record request against the context
@@ -287,6 +291,7 @@ class WriteFileRecordResponse():
                 file_number=decoded[1], record_number=decoded[2],
                 record_data=data[count - response_length:count])
             if decoded[0] == 0x06: self.records.append(record)
+        return  self.records   # add for fuzzer   
 
 
 class MaskWriteRegisterRequest():
@@ -323,7 +328,9 @@ class MaskWriteRegisterRequest():
 
         :param data: The data to decode into the address
         '''
-        self.address, self.and_mask, self.or_mask = struct.unpack('>HHH', data)        
+        (self.address, self.and_mask, self.or_mask) = struct.unpack('>HHH', data)
+        return self.address, self.and_mask, self.or_mask
+
         
 
     def execute(self, context):
@@ -377,6 +384,7 @@ class MaskWriteRegisterResponse():
         :param data: The packet data to decode
         '''
         self.address, self.and_mask, self.or_mask = struct.unpack('>HHH', data)
+        return self.address, self.and_mask, self.or_mask
 
 
 class ReadFifoQueueRequest():
@@ -478,11 +486,15 @@ class ReadFifoQueueResponse():
 
         :param data: The packet data to decode
         '''
+        
         self.values = []
+
         _, count = struct.unpack('>HH', data[0:4])
         for index in range(0, count - 4):
             idx = 4 + index * 2
             self.values.append(struct.unpack('>H', data[idx:idx + 2])[0])
+        #add return value list 
+        return  self.values  
 
 class ReadWriteMultipleRegistersRequest():
     '''
@@ -622,6 +634,8 @@ class ReadWriteMultipleRegistersResponse():
         return "ReadWriteNRegisterResponse (%d)" % len(self.registers)
 
 
+
+
 #---------------------------------------------------------------------------#
 # Read Device Information
 #---------------------------------------------------------------------------#
@@ -758,7 +772,11 @@ class ReadDeviceInformationResponse():
         self.information, count = {}, 6   # skip the header information
 
         while count < len(data):
-            object_id, object_length = struct.unpack('>BB', data[count:count+2])
+            if len(data[count:count+2]) ==2:
+                object_id, object_length = struct.unpack('>BB', data[count:count+2]) 
+            else :print(data[count:count+2]) ;break    #add for fuzzer                              
+                 #object_id, object_length = struct.unpack('>BB', data[count:count+2]) 
+
             count += object_length + 2
             self.information[object_id] = data[count-object_length:count]
 
@@ -768,7 +786,6 @@ class ReadDeviceInformationResponse():
         :returns: The string representation of the response
         '''
         return "ReadDeviceInformationResponse(%d)" % self.read_code
-
 
 #---------------------------------------------------------------------------#
 # Exported symbols

@@ -1,0 +1,20 @@
+
+Some changes and improvements related update of version Python 3 
+
+1.Better structure to code (module and scripts)
+2.Improve debugging in log files
+3.Better management exception and raise
+4.FC43 in list operation fuzz testing
+5.Serial FC operation fuzz testing 
+6.Better management basetest of MBAP and payload
+7.Better management basetest of payload
+8.Fix  productiont FC: 23 (0x17): Read/Write Multiple registers 
+
+
+.. and many more changes and improvements
+
+
+
+
+
+
